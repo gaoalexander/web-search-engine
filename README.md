@@ -49,24 +49,7 @@ Any non-alphanumeric characters will be discarded. Terms are delimited by the SP
 The command line interface reads as follows, and illustrates the end result of parsing:
 Loading Term Lists into Memory
 Now that we have parsed the query into a list of terms, we will need to find the location and length of each term in the Inverted Index (located on disk, too large to load at once into main memory). We do this by looking each term up in the Lexicon (which is loaded into main memory in a D.I.M.D.S.).
-From the Inverted Index, we read in each term’s Document ID list and corresponding Term Frequency list. To make this explicitly clear, a hypothetical example might look like this:
-
-Term: Apple TermID: 31805
-Lexicon[31805] : 120 ( = start), 240 ( = length)
-
-Byte Location: 120
-
-DocID: 12...
-... 8276
-240 11338 14889
-26
-Frequency: 1 2 1 1 5 12 1 1 15
-Byte Location: 241
-...
-359
-47
-93
-9154
+From the Inverted Index, we read in each term’s Document ID list and corresponding Term Frequency list.
 
 # Finding Common Documents Using NextGEQ Algorithm
 Once we have loaded each terms Document ID and Frequency lists into memory, we use a NextGEQ algorithm to find the intersection of documents across all terms. In this implementation, the user is given the option between conjunctive and disjunctive querying.
@@ -86,7 +69,7 @@ In pseudocode terms:
 • Calculate the BM25 Score for all documents containing that term • Add Document to Max Heap
 • Return top 10 results from heap
  
- Calculating BM25 Score
+# Calculating BM25 Score
 The BM25 Score is calculated according to the following formula:
 (Credit: Search Engines, Lecture 4 Slides, Prof. Torsten Suel, NYU Fall 2019)
 N - total number of documents contained in the index.
@@ -94,38 +77,39 @@ ft - number of documents containing term t. This is easily obtained by the lengt
 d - length of document. This is obtained from the in-memory page length table.
 davg - average document length. This is calculated dynamically upon loading the page-length table into memory. k1 = 1.2, b = 0.75 - these are the suggested values for the regularization parameters, provided in lecture 4 notes.
     
- Generating/Rating Snippets
+# Generating/Rating Snippets
 The program returns the top n results, obtained by reading from the top of the max heap of result candidates. A snippet is then generated for each of these top results. The algorithm for generating snippets is designed in the following way:
+
 1. Now it becomes necessary to reference the original documents. For each top-n result, we load the document into memory, from the document file that was created during indexing. It would also be possible to read the document directly from the common crawl data, if instead of exporting each document as an individual file, its location in the common crawl dataset was recorded during indexing. I would implement this in the future with some additional time. Once the file is loaded into memory, for each query term, we find all occurrences of that term in the document, and record the positions in a list.
+
 2. Now that we have positional information for each query term in the document, we use a sliding window of snippet_len characters, and count the number and frequency of each term within the sliding window.
+
 3. We use this to generate a “snippet ranking” for each window. While the snippet ranking takes into account the frequency of each term in the window, it gives a more significant weight to the presence of multiple terms contained within the window. Each term’s contribution to the snippet rating is a function of its Term Frequency - Inverse Document Frequency. This is used in order to give a higher weight to “rarer” query terms that are found within the snippet.
-Runtime / Performance of Snippet Generation
+
+## Runtime / Performance of Snippet Generation
 The average runtime complexity for generating a snippet for a single document is in the order of O(n * k * m), where:
 n = the length of the document
 k = number of terms in query
 m = average number of occurrences of term in document
 On average, generating snippets for 10 documents takes less than a second. Obviously, for very large documents, it takes longer to dynamically generate snippets, as n increases.
   
- Displaying Results
+# Displaying Results
 Once we have considered all snippet windows within the document, the snippet with the highest rating is displayed to the user along with the corresponding page. Each top results’ BM25 score is also displayed, along with additional term and document information that was used to calculate the score. Each query also displays the total number of valid results next to the number of results actually returned.
   
- Performance
+# Performance
 Overall, the most computationally expensive part of building the search engine was the indexing of documents. This stage takes in the order of hours to complete. This preprocessing stage would obviously need to be completed prior to accepting user queries on the data, or in the background if the index is being updated for recrawls.
 Once this stage is complete, the main bottleneck is loading the Term Dictionary, Lexicon and Page Tables into main memory upon starting the Querying program. This takes a couple minutes on average, however once these have been loaded into memory, a user can make as many queries as they wish, without having to reload the data structures upon each query.
 On average, queries execute quickly, in usually less than a second — this includes ranking all candidate documents, generating snippets and displaying results. This performance seems sufficient for general search engine usage.
+
 Time it takes to load all auxiliary data structures into memory: 2m 45s
 Main memory requirement to load auxiliary data structures: ~2.5 GB
 Average time to perform query: <1s to deliver 10 results with dynamically-selected snippets
-In total, I processed 52 common crawl files, or about 2.3M pages. This amounts to a total of 754445280 postings.
+
+In total, I processed 52 common crawl files, or about 2.3M pages.
+
+This amounts to a total of 754445280 postings.
 23,146,085 unique terms in Lexicon.
- File sizes (on disk):
-Raw Common Crawl WET files Intermediate Postings Files Uncompressed Inverted Index Compressed Inverted Index
-Loads into Main Memory
-Lexicon
-Page Table
-Page Length Table Term-TermID Dictionary
-21.88 GB 12.94 GB 12.94 GB 3.18 GB
-503 MB 198 MB 26 MB 438 MB
-Follow-Up Work To Be Done
+
+# Follow-Up Work To Be Done
 The inverted index is compressed using varbyte compression. I would like to in the future implement additive varbyte compression, which would give even more optimized memory performance, both on disk and in main memory.
  
