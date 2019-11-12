@@ -3,21 +3,26 @@ Creates Varbyte-Compressed Inverted Index of the Common Crawl dataset (https://c
 
 # Overview
  This program builds off of the previous work of creating an inverted index from the common crawl dataset, and allows a user to perform queries on this data. (Note: for more detailed information regarding the indexing stage, please consult previously submitted document “InvertedIndex”). In order to fully implement this program, some modifications to the inverted indexing program were necessary, so those changes will be described here, in addition to a detailed explanation of the querying program.
+ 
 The main function of the querying program is designed as follows:
+
 Program Structure
+
 I.) Load in auxiliary data structures into main memory, which are needed in order perform querying. These include: - Term-to-TermIDDictionary
-- Lexicon which contains the following:
-- TermID
-- Start position in Index - Length in Index
-- Page Table, a dictionary that contains <Key>:<Value> pairs <DocID>:<URL>
-- Page Length Table, a dictionary that contains <Key>:<Value> pairs <DocID>:<Document Length>. The
+ - Lexicon which contains the following:
+ - TermID
+ - Start position in Index - Length in Index
+ - Page Table, a dictionary that contains <Key>:<Value> pairs <DocID>:<URL>
+ - Page Length Table, a dictionary that contains <Key>:<Value> pairs <DocID>:<Document Length>. The
 purpose of this auxiliary data structure is to provide useful document information when calculating the BM25 Score of query candidate pages.
+
 II.) Set parameters that will define the content that is returned for a given query. These include:
 - n_results - defines the number of results to return for any query
 - snippet_len - defines the length of snippets that will be displayed to preview contents of results.
   
  III.)* Get User Query
 The program will listen for command line query input from the user. This process parses the query into separate terms, and returns these as a list.
+
 IV.)* Execute Query
 The program takes the list of user query terms and executes the query in the following steps:
 - Lookup each term’s Start and Length in Lexicon.
@@ -26,11 +31,16 @@ The program takes the list of user query terms and executes the query in the fol
 - Select top n_results based on candidates with top BM25 score.
 - Generate snippet for each top result.
 - Display results.
+
 *Steps III and IV will run in an infinite loop, until the program is manually terminated.
-Instructions - How To Run The Indexing Program
+
+## Instructions - How To Run The Indexing Program
+
 This program is written in C++. In order to run the program, one simply needs to run the executable file ‘Common Crawl Search Engine’ located in the project root directory. However, it must be noted that it is necessary to load the auxiliary data structures into memory at runtime — without these files, the program will not run properly. (Data files are not included with the submission for practical file size considerations).
 Updates to Indexing Program - Outputting additional data:
+
 - Documents files - Full documents are stored in the ‘_data/documents’ sub-directory. The naming convention follows this format: <Assigned docID>.bin — these full documents will be useful when generating snippets for a given (dynamic) search query on a given document.
+
 - Page Length Table - This is a table containing <key>:<value> pairs of <docID>:<document length>. This will be very useful when needing to calculate page BM25 scores during query execution.
    
 # Query Processing
@@ -40,10 +50,13 @@ The command line interface reads as follows, and illustrates the end result of p
 Loading Term Lists into Memory
 Now that we have parsed the query into a list of terms, we will need to find the location and length of each term in the Inverted Index (located on disk, too large to load at once into main memory). We do this by looking each term up in the Lexicon (which is loaded into main memory in a D.I.M.D.S.).
 From the Inverted Index, we read in each term’s Document ID list and corresponding Term Frequency list. To make this explicitly clear, a hypothetical example might look like this:
+
 Term: Apple TermID: 31805
 Lexicon[31805] : 120 ( = start), 240 ( = length)
-   Byte Location: 120 DocID: 12
-...
+
+Byte Location: 120
+
+DocID: 12...
 ... 8276
 240 11338 14889
 26
