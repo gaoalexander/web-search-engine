@@ -37,7 +37,8 @@ The program takes the list of user query terms and executes the query in the fol
 ## Instructions - How To Run The Indexing Program
 
 This program is written in C++. In order to run the program, one simply needs to run the executable file ‘Common Crawl Search Engine’ located in the project root directory. However, it must be noted that it is necessary to load the auxiliary data structures into memory at runtime — without these files, the program will not run properly. (Data files are not included with the submission for practical file size considerations).
-Updates to Indexing Program - Outputting additional data:
+
+# Updates to Indexing Program - Outputting additional data:
 
 - Documents files - Full documents are stored in the ‘_data/documents’ sub-directory. The naming convention follows this format: <Assigned docID>.bin — these full documents will be useful when generating snippets for a given (dynamic) search query on a given document.
 
@@ -45,37 +46,43 @@ Updates to Indexing Program - Outputting additional data:
    
 # Query Processing
 The user enters a string query (simply a string that will contain any combination of characters, number of terms, etc). This raw query needs to be processed and parsed into terms, which are what will actually be used to query the index and ultimately return pages as search results.
+
 Any non-alphanumeric characters will be discarded. Terms are delimited by the SPACE (‘ ’) character. Each individual term-string is then converted to all lowercase characters. The term is then cross-referenced against a list of common stop words that should be excluded. Assuming it is not a stop word, it is then added to a SET of terms which represents the current query. The set data structure is used here as a simple way to avoid duplicate search terms in the query.
-The command line interface reads as follows, and illustrates the end result of parsing:
-Loading Term Lists into Memory
+
+# Loading Term Lists into Memory
 Now that we have parsed the query into a list of terms, we will need to find the location and length of each term in the Inverted Index (located on disk, too large to load at once into main memory). We do this by looking each term up in the Lexicon (which is loaded into main memory in a D.I.M.D.S.).
+
 From the Inverted Index, we read in each term’s Document ID list and corresponding Term Frequency list.
 
 # Finding Common Documents Using NextGEQ Algorithm
 Once we have loaded each terms Document ID and Frequency lists into memory, we use a NextGEQ algorithm to find the intersection of documents across all terms. In this implementation, the user is given the option between conjunctive and disjunctive querying.
-Conjunctive Querying: Any result candidates must contain ALL of the valid query terms. My implementation of this algorithm works in the following way:
+
 Implementation of NextGEQ function:
 In pseudocode terms:
-• Initialize docID to 0
-• while (docID < largest docID across all of the query terms)...
-• docID = Next Greater or Equal (nextGEQ) to current docID, in term #0 docID list • For (all additional terms)...
-• If (they all contain the same docID):
-• Get each Term Frequency and # Documents containing each term • Calculate Page BM25 score and add to MAX HEAP
-• If (the searched-for docID is higher than the max in any list, stop looking) • Else (set current docID to the next highest docID and start from the top)
+ • Initialize docID to 0
+  • while (docID < largest docID across all of the query terms)...
+   • docID = Next Greater or Equal (nextGEQ) to current docID, in term #0 docID list
+   • For (all additional terms)...
+    • If (they all contain the same docID):
+     • Get each Term Frequency and # Documents containing each term
+     • Calculate Page BM25 score and add to MAX HEAP
+    • If (the searched-for docID is higher than the max in any list, stop looking)
+    • Else (set current docID to the next highest docID and start from the top)
    
- Disjunctive Querying: Any result candidates must contain at least one of the query terms. The algorithm is as follows:
-In pseudocode terms:
-• For each term:
-• Calculate the BM25 Score for all documents containing that term • Add Document to Max Heap
-• Return top 10 results from heap
+ Disjunctive Querying: Any result candidates must contain at least one of the query terms. In pseudocode terms:
+ • For each term:
+  • Calculate the BM25 Score for all documents containing that term
+  • Add Document to Max Heap
+ • Return top 10 results from heap
  
 # Calculating BM25 Score
-The BM25 Score is calculated according to the following formula:
-(Credit: Search Engines, Lecture 4 Slides, Prof. Torsten Suel, NYU Fall 2019)
+The BM25 Score is calculated according to the BM25 formula, where:
 N - total number of documents contained in the index.
-ft - number of documents containing term t. This is easily obtained by the length of the in-memory term docID list. fd,t - frequency of term in document d. Obtained by the length of the in-memory term frequency list.
+ft - number of documents containing term t. This is easily obtained by the length of the in-memory term docID list.
+fd,t - frequency of term in document d. Obtained by the length of the in-memory term frequency list.
 d - length of document. This is obtained from the in-memory page length table.
-davg - average document length. This is calculated dynamically upon loading the page-length table into memory. k1 = 1.2, b = 0.75 - these are the suggested values for the regularization parameters, provided in lecture 4 notes.
+davg - average document length. This is calculated dynamically upon loading the page-length table into memory.
+k1 = 1.2, b = 0.75
     
 # Generating/Rating Snippets
 The program returns the top n results, obtained by reading from the top of the max heap of result candidates. A snippet is then generated for each of these top results. The algorithm for generating snippets is designed in the following way:
@@ -98,7 +105,9 @@ Once we have considered all snippet windows within the document, the snippet wit
   
 # Performance
 Overall, the most computationally expensive part of building the search engine was the indexing of documents. This stage takes in the order of hours to complete. This preprocessing stage would obviously need to be completed prior to accepting user queries on the data, or in the background if the index is being updated for recrawls.
+
 Once this stage is complete, the main bottleneck is loading the Term Dictionary, Lexicon and Page Tables into main memory upon starting the Querying program. This takes a couple minutes on average, however once these have been loaded into memory, a user can make as many queries as they wish, without having to reload the data structures upon each query.
+
 On average, queries execute quickly, in usually less than a second — this includes ranking all candidate documents, generating snippets and displaying results. This performance seems sufficient for general search engine usage.
 
 Time it takes to load all auxiliary data structures into memory: 2m 45s
@@ -106,7 +115,6 @@ Main memory requirement to load auxiliary data structures: ~2.5 GB
 Average time to perform query: <1s to deliver 10 results with dynamically-selected snippets
 
 In total, I processed 52 common crawl files, or about 2.3M pages.
-
 This amounts to a total of 754445280 postings.
 23,146,085 unique terms in Lexicon.
 
