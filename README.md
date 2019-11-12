@@ -1,5 +1,5 @@
 # web-search-engine
-Creates Varbyte-Compressed Inverted Index of the Common Crawl dataset (https://commoncrawl.org/), as well as associated Lexicon, Term Dictionary, and Page Table.  Allows real-time querying (both conjunctive and disjunctive) of millions of pages ranked by BM25 Score, with average query time &lt; 1s.
+Creates Varbyte-Compressed Inverted Index of the Common Crawl dataset (https://commoncrawl.org/), as well as associated Lexicon, Term Dictionary, and Page Table.  Allows real-time querying (both conjunctive and disjunctive) of millions of pages ranked by BM25 Score, with average query time &lt; 1s. Dynamically generates ranked snippets based on query term TF-IDF at runtime. 
 
 # Overview
  This program builds off of the previous work of creating an inverted index from the common crawl dataset, and allows a user to perform queries on this data. (Note: for more detailed information regarding the indexing stage, please consult previously submitted document “InvertedIndex”). In order to fully implement this program, some modifications to the inverted indexing program were necessary, so those changes will be described here, in addition to a detailed explanation of the querying program.
